@@ -1,0 +1,70 @@
+{
+ "schema": "numerics-trajectory-frozen@2",
+ "spec": {
+  "endpoints": [
+   {
+    "name": "loss_tail",
+    "loss": "loss",
+    "steps": [
+     2,
+     6
+    ]
+   },
+   {
+    "name": "gate_top10_step1",
+    "loss": "gate_top10_abs_mean",
+    "steps": [
+     1,
+     2
+    ]
+   }
+  ]
+ },
+ "k": 2.0,
+ "reference_seeds": [
+  10,
+  11,
+  12,
+  13,
+  14,
+  15
+ ],
+ "reference_values": {
+  "10": {
+   "loss_tail": 0.03654448827728629,
+   "gate_top10_step1": 1.9656090444186702e-05
+  },
+  "11": {
+   "loss_tail": 0.03788257436826825,
+   "gate_top10_step1": 1.9677905584103428e-05
+  },
+  "12": {
+   "loss_tail": 0.05018383590504527,
+   "gate_top10_step1": 1.9699102267622948e-05
+  },
+  "13": {
+   "loss_tail": 0.03244432294741273,
+   "gate_top10_step1": 1.9756244000745937e-05
+  },
+  "14": {
+   "loss_tail": 0.03176094824448228,
+   "gate_top10_step1": 1.9682393030961975e-05
+  },
+  "15": {
+   "loss_tail": 0.03767398092895746,
+   "gate_top10_step1": 1.968815558939241e-05
+  }
+ },
+ "endpoints": {
+  "loss_tail": {
+   "reference_mean": 0.03774835844524205,
+   "sigma_seed": 0.0066346940010506275,
+   "delta": 0.013269388002101255
+  },
+  "gate_top10_step1": {
+   "reference_mean": 1.9693315152835567e-05,
+   "sigma_seed": 3.394872068440214e-08,
+   "delta": 6.789744136880427e-08
+  }
+ }
+}

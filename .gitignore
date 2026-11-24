@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+*.so
+*.o
+.pytest_cache/
+runs/
+assets/
+targets/
+*.pt
+*.safetensors
+*.zip
+*.npz
+!task/**
+!bench/**
+!docs/**

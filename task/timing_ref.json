@@ -1,0 +1,24 @@
+{
+ "frozen_at": "2026-11-21T21:07:45",
+ "reference_commit": "6e832aaf0dd2ef8edc5400d6448529f166575f98",
+ "runs": 2,
+ "iterations_timed": 8,
+ "total_s": 202.309464,
+ "s_per_iteration": 25.288683,
+ "reference_spread": 0.0,
+ "peak_memory_allocated_gib": 56.187,
+ "per_run_s_per_iteration": [
+  25.288411,
+  25.288956
+ ],
+ "per_run_window_s": [
+  [
+   101.14487,
+   101.162415
+  ],
+  [
+   101.147128,
+   101.164516
+  ]
+ ]
+}

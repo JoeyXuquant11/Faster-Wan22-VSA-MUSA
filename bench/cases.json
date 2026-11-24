@@ -1,0 +1,8 @@
+[
+ {
+  "name": "train_2step",
+  "seed": 42,
+  "steps": 2,
+  "phase": "train"
+ }
+]

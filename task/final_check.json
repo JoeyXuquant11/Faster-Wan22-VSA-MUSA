@@ -1,0 +1,220 @@
+{
+ "status": "PASS",
+ "final": true,
+ "n1": false,
+ "tree": "$WORK/wan22_vsa_s5000",
+ "config": null,
+ "environment": {},
+ "correctness": {
+  "passed": true,
+  "stage": "statistical",
+  "verdict": "equivalent",
+  "measured_tier": "N1",
+  "numerics": {
+   "status": "INCORRECT",
+   "measured_tier": "N1",
+   "bitwise": false,
+   "checked": 71008,
+   "bitwise_identical": 15992,
+   "exact_failures": [],
+   "violations": 55016,
+   "unresolved": 55016,
+   "errors": [],
+   "compare_json": "$WORK/runs/clawo-final/latest/numerics_compare.json"
+  },
+  "trajectory": {
+   "seeds": [
+    10
+   ],
+   "sigma_k": 3.0,
+   "endpoints": {
+    "loss_tail": {
+     "state": "within",
+     "mean": -0.00022665411233901978,
+     "sigma_seed": 0.0066346940010506275,
+     "bound": 0.01990408200315188,
+     "mean_in_sigma": -0.03416195416143206,
+     "diffs": [
+      -0.00022665411233901978
+     ]
+    },
+    "gate_top10_step1": {
+     "state": "within",
+     "mean": -1.1878000805154443e-08,
+     "sigma_seed": 3.394872068440214e-08,
+     "bound": 1.018461620532064e-07,
+     "mean_in_sigma": -0.3498806601749748,
+     "diffs": [
+      -1.1878000805154443e-08
+     ]
+    }
+   },
+   "verdict": "equivalent"
+  }
+ },
+ "performance": {
+  "mode": "final_ref_cand_ref",
+  "reference_s_per_iteration": 25.266022,
+  "frozen_reference_s_per_iteration": 25.288683,
+  "candidate_s_per_iteration": 4.783749,
+  "speedup": 5.2816,
+  "speedup_bar": 1.02,
+  "reference_spread": 0.0002,
+  "peak_memory_allocated_gib": 68.602,
+  "reference_peak_memory_allocated_gib": 56.187,
+  "problems": [],
+  "runs": {
+   "ref_a": {
+    "status": "ok",
+    "label": "ref_a",
+    "wall_s": 337.811,
+    "startup_s": 113.428,
+    "warmup": 2,
+    "window": 4,
+    "repeats": 2,
+    "iterations_timed": 8,
+    "window_s": [
+     101.072953,
+     101.037868
+    ],
+    "total_s": 202.110821,
+    "s_per_iteration": 25.263853,
+    "window_spread": 0.0003,
+    "peak_memory_allocated_gib": 56.187,
+    "peak_memory_reserved_gib": 56.699,
+    "rng_r0": [
+     "7b24bcd3f411d3f6",
+     "3d0f0ebe03580bfc",
+     "d14eb75725e10bf3",
+     "1550bebfba98a4e7",
+     "dc163f2db318eb2f",
+     "354e0ee4a81b45f6",
+     "93d5050ce6ea0dba",
+     "09a06219e8ed6f29",
+     "8afcb896a29170e6",
+     "f7b91ede1b79014f"
+    ],
+    "fingerprint": {
+     "versions": {
+      "torch": "2.9.1.post1+musa5.2.0",
+      "torch_musa": "2.9.1.post1+musa5.2.0",
+      "world_size": 8
+     },
+     "world_size": 8,
+     "device": "MTT S5000",
+     "warmup": 2,
+     "window": 4,
+     "repeats": 2,
+     "candidate_environment": {}
+    }
+   },
+   "cand": {
+    "status": "ok",
+    "label": "cand",
+    "wall_s": 181.538,
+    "startup_s": 134.89,
+    "warmup": 2,
+    "window": 4,
+    "repeats": 2,
+    "iterations_timed": 8,
+    "window_s": [
+     19.149291,
+     19.1207
+    ],
+    "total_s": 38.269991,
+    "s_per_iteration": 4.783749,
+    "window_spread": 0.0015,
+    "peak_memory_allocated_gib": 68.602,
+    "peak_memory_reserved_gib": 75.428,
+    "rng_r0": [
+     "7b24bcd3f411d3f6",
+     "3d0f0ebe03580bfc",
+     "d14eb75725e10bf3",
+     "1550bebfba98a4e7",
+     "dc163f2db318eb2f",
+     "354e0ee4a81b45f6",
+     "93d5050ce6ea0dba",
+     "09a06219e8ed6f29",
+     "8afcb896a29170e6",
+     "f7b91ede1b79014f"
+    ],
+    "fingerprint": {
+     "versions": {
+      "torch": "2.9.1.post1+musa5.2.0",
+      "torch_musa": "2.9.1.post1+musa5.2.0",
+      "world_size": 8
+     },
+     "world_size": 8,
+     "device": "MTT S5000",
+     "warmup": 2,
+     "window": 4,
+     "repeats": 2,
+     "candidate_environment": {}
+    }
+   },
+   "ref_b": {
+    "status": "ok",
+    "label": "ref_b",
+    "wall_s": 321.194,
+    "startup_s": 112.187,
+    "warmup": 2,
+    "window": 4,
+    "repeats": 2,
+    "iterations_timed": 8,
+    "window_s": [
+     101.058785,
+     101.086745
+    ],
+    "total_s": 202.14553,
+    "s_per_iteration": 25.268191,
+    "window_spread": 0.0003,
+    "peak_memory_allocated_gib": 56.187,
+    "peak_memory_reserved_gib": 56.699,
+    "rng_r0": [
+     "7b24bcd3f411d3f6",
+     "3d0f0ebe03580bfc",
+     "d14eb75725e10bf3",
+     "1550bebfba98a4e7",
+     "dc163f2db318eb2f",
+     "354e0ee4a81b45f6",
+     "93d5050ce6ea0dba",
+     "09a06219e8ed6f29",
+     "8afcb896a29170e6",
+     "f7b91ede1b79014f"
+    ],
+    "fingerprint": {
+     "versions": {
+      "torch": "2.9.1.post1+musa5.2.0",
+      "torch_musa": "2.9.1.post1+musa5.2.0",
+      "world_size": 8
+     },
+     "world_size": 8,
+     "device": "MTT S5000",
+     "warmup": 2,
+     "window": 4,
+     "repeats": 2,
+     "candidate_environment": {}
+    }
+   }
+  },
+  "passed": true
+ },
+ "source_digest": "bb3314da826ec9fadd50f06d339ec20941b9015b9d747aad78740dd7ca9e0ccf",
+ "inputs": [
+  {
+   "when": "start",
+   "ok": true,
+   "mismatches": []
+  },
+  {
+   "when": "end",
+   "ok": true,
+   "mismatches": []
+  }
+ ],
+ "cost": {
+  "gpu_hours": 2.7039
+ },
+ "evaluator_sha256": "2c7ad67e941eb519812e3b0954660b5f1811e98a88be8bd6a777e329ac42407e",
+ "finished": "2026-11-22T12:44:59"
+}

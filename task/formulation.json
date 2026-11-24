@@ -1,0 +1,43 @@
+{
+ "task": "Wan2.2-TI2V-5B + VSA full finetuning (704x1280x121f, 30 layers, 5.28B params, VSA sparsity=0.80) on 8x MTT S5000",
+ "reference_commit": "6e832aaf0dd2ef8edc5400d6448529f166575f98",
+ "evaluator_sha256": "2c7ad67e941eb519812e3b0954660b5f1811e98a88be8bd6a777e329ac42407e",
+ "frozen_at": "2026-11-21T21:43:58",
+ "inputs": {
+  "model_dir": {
+   "path": "$ASSETS/models/Wan2.2-TI2V-5B",
+   "files": 70,
+   "digest": "df142961ab2c1f8c6611fbff0801eebb51a2f6abd3b6049d445c677451bfd905"
+  },
+  "data_dir": {
+   "path": "$ASSETS/data/wan22_vsa_data_704x1280_121f",
+   "files": 33,
+   "digest": "c9b99230d9bbb48d8de32370307cd004c9fe68f678f953d617bbad2144a30ed6"
+  },
+  "cases": {
+   "path": "$WORK/bench/cases.json",
+   "size": 82,
+   "sha256": "ac50b5645c67b438bd96f41db4aabf037b21b5c99e8ccb5624a4b71949c80311"
+  },
+  "loader_ref": {
+   "path": "$WORK/task/loader_ref.json",
+   "size": 87,
+   "sha256": "e4da6d903bf91eaf4a971feb6027618e9da386581c9d88be5aec23c183a7b2b9"
+  },
+  "timing_ref": {
+   "path": "$WORK/task/timing_ref.json",
+   "size": 420,
+   "sha256": "4ef809f4f5dfea14fd0b4c25586bb523828ccf5abbdea1b689a379570654fc33"
+  },
+  "thresholds": {
+   "path": "$WORK/task/thresholds.json",
+   "size": 9486243,
+   "sha256": "c6307fa62455b11a9ff3c084d0f05633a876f2f06030df01bbf70dd252bdc314"
+  },
+  "traj_frozen": {
+   "path": "$WORK/task/traj/frozen.json",
+   "size": 1276,
+   "sha256": "a1f054a405097f4dfebecd8eda370fc3af09c9a711a2123337cb797008b81e59"
+  }
+ }
+}
