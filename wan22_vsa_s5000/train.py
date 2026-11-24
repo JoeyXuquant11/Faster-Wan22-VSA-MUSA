@@ -23,6 +23,7 @@ from wan22_vsa.distributed import (
     wrap_fsdp2,
 )
 from wan22_vsa.model import load_wan22_ti2v_5b_vsa
+from wan22_vsa.optim import FusedMusaAdamW
 from wan22_vsa.vsa import compute_vsa_sparsity
 
 
@@ -112,7 +113,7 @@ class Trainer:
         return model
 
     def _build_optimizer(self) -> torch.optim.Optimizer:
-        return torch.optim.AdamW(
+        return FusedMusaAdamW(
             self.model.parameters(),
             lr=self.args.learning_rate,
             betas=(self.args.beta1, self.args.beta2),

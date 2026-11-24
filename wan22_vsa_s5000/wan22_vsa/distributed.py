@@ -38,11 +38,19 @@ def wrap_fsdp2(
     param_dtype: torch.dtype = torch.bfloat16,
     reduce_dtype: torch.dtype = torch.float32,
 ) -> torch.nn.Module:
-    """Wrap each WanVSATransformerBlock and root model with PyTorch FSDP2."""
+    """Wrap WanVSATransformerBlocks (bucketed) and root model with PyTorch FSDP2."""
+    bpb = int(os.environ.get("WAN22_FSDP_BPB", "5"))
+    reshard = os.environ.get("WAN22_FSDP_RESHARD", "0") == "1"
     mp_policy = MixedPrecisionPolicy(param_dtype=param_dtype, reduce_dtype=reduce_dtype, cast_forward_inputs=False)
-    for block in model.blocks:
-        fully_shard(block, mp_policy=mp_policy)
-    fully_shard(model, mp_policy=mp_policy)
+    blocks = list(model.blocks)
+    if bpb <= 1:
+        for block in blocks:
+            fully_shard(block, mp_policy=mp_policy, reshard_after_forward=reshard)
+    else:
+        for i in range(0, len(blocks), bpb):
+            grp = blocks[i : i + bpb]
+            fully_shard(grp if len(grp) > 1 else grp[0], mp_policy=mp_policy, reshard_after_forward=reshard)
+    fully_shard(model, mp_policy=mp_policy, reshard_after_forward=reshard)
     return model
 
 

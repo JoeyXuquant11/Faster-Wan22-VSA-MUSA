@@ -41,6 +41,7 @@ class VSAMetadata:
     variable_block_sizes: torch.Tensor
     non_pad_index: torch.Tensor
     untile_combined_index: torch.Tensor
+    pad_to_raster: torch.Tensor
 
 
 def compute_vsa_topk(sparsity: float, num_blocks: int) -> int:
@@ -125,6 +126,8 @@ def _cached_vsa_indices(
     non_pad_index = index_pad[index_mask]
     untile_combined_index = non_pad_index[reverse_tile_partition_indices]
     padded_seq_length = n_win * block_elements
+    pad_to_raster = torch.full((padded_seq_length,), -1, dtype=torch.int32, device=device)
+    pad_to_raster[non_pad_index] = tile_partition_indices.to(torch.int32)
     return (
         num_tiles,
         padded_seq_length,
@@ -133,6 +136,7 @@ def _cached_vsa_indices(
         vbs,
         non_pad_index,
         untile_combined_index,
+        pad_to_raster,
     )
 
 
@@ -151,6 +155,7 @@ def build_vsa_metadata(
         vbs,
         non_pad_index,
         untile_combined_index,
+        pad_to_raster,
     ) = _cached_vsa_indices(dit_seq_shape, tile_size, dev)
     total_seq_length = math.prod(dit_seq_shape)
     topk = compute_vsa_topk(sparsity, int(vbs.numel()))
@@ -167,6 +172,7 @@ def build_vsa_metadata(
         variable_block_sizes=vbs,
         non_pad_index=non_pad_index,
         untile_combined_index=untile_combined_index,
+        pad_to_raster=pad_to_raster,
     )
 
 
@@ -260,12 +266,78 @@ def video_sparse_attention(
     gate_compress: torch.Tensor | None,
     meta: VSAMetadata,
     q_chunk_blocks: int = 32,
+    offload_ctx=None,
+    dbv_box=None,
+    dbg_box=None,
 ) -> torch.Tensor:
     """Run full VSA on raster-order [B, S, H, D] inputs, returning [B, S, H, D]."""
     B, S, H, D = q.shape
     block_elements = math.prod(meta.tile_size)
+    vbs = meta.variable_block_sizes
 
-    # 1. Tile into zero-padded 3D blocks
+    use_musa_fast = (
+        q.device.type == "musa"
+        and q.dtype == torch.bfloat16
+        and block_elements == 64
+        and D == 128
+    )
+
+    if use_musa_fast:
+        from .fused_ops import fused_vsa_combine_untile, fused_vsa_tile_pool
+        from .vsa_kernels import block_sparse_attention_tilelang, fused_topk_qorder_bf16
+
+        # Static 3-slot GPU ring buffers for offloaded (q_t, k_t, v_t, out_s) -> zero 720MiB alloc stalls
+        out_qkv = None
+        out_s_buf = None
+        use_ring = False
+        if offload_ctx is not None:
+            pool, blk_idx = offload_ctx
+            sp = (B, H, meta.padded_seq_length, D)
+            qt_b, kt_b, vt_b, os_b = pool.get_ring_slot(
+                "vsa", blk_idx, ((sp, q.dtype), (sp, q.dtype), (sp, q.dtype), (sp, q.dtype)), num_slots=3
+            )
+            out_qkv = (qt_b, kt_b, vt_b)
+            out_s_buf = os_b
+            use_ring = True
+
+        # 1-3. Fused Tile + Transpose + FP32 MeanPool (no gate tiling; fused db_v in bwd!)
+        q_bhsd, k_bhsd, v_bhsd, q_c, k_c, v_c = fused_vsa_tile_pool(
+            q, k, v, meta.pad_to_raster, vbs, out_qkv=out_qkv, dbv_box=dbv_box
+        )
+        scores = torch.matmul(q_c, k_c.transpose(-2, -1)) * (D ** -0.5)
+        attn_c = torch.softmax(scores.float(), dim=-1).to(q_bhsd.dtype)
+        out_c = torch.matmul(attn_c, v_c)  # [B, H, num_blocks, D]
+
+        # 4. Top-k tile routing (deterministic ascending warp-ballot BF16 top-k + 4-quantile Q-order)
+        if scores.dtype == torch.bfloat16 and 64 <= int(vbs.numel()) <= 512:
+            topk_idx, q_order = fused_topk_qorder_bf16(scores.detach(), meta.topk)
+            pre_sorted = True
+        else:
+            topk_idx = torch.topk(scores.detach().float(), k=meta.topk, dim=-1, largest=True, sorted=True).indices
+            q_order = None
+            pre_sorted = False
+
+        # 5. Fine block-sparse attention (TileLang-MUSA block-sparse kernel)
+        out_s = block_sparse_attention_tilelang(
+            q_bhsd,
+            k_bhsd,
+            v_bhsd,
+            topk_idx,
+            vbs,
+            block_elements,
+            offload_ctx=offload_ctx,
+            pre_sorted=pre_sorted,
+            q_order=q_order,
+            out_buf=out_s_buf,
+            is_ring=use_ring,
+        )
+
+        # 6-7. Fused Combine + Untile directly with raster gate_compress (fused db_gate in bwd!)
+        return fused_vsa_combine_untile(
+            out_s, out_c, gate_compress, meta.pad_to_raster, vbs, S, dbg_box=dbg_box
+        )
+
+    # Fallback path (non-MUSA / non-BF16 / non-standard tile or head_dim)
     stack = [q, k, v] if gate_compress is None else [q, k, v, gate_compress]
     qkvg = torch.cat(stack, dim=0)
     qkvg_tiled = tile_qkvg(qkvg, meta)
@@ -275,33 +347,25 @@ def video_sparse_attention(
     else:
         q_t, k_t, v_t, g_t = qkvg_tiled.chunk(4, dim=0)
 
-    # 2. Transpose to [B, H, S_pad, D]
     q_bhsd = q_t.transpose(1, 2).contiguous()
     k_bhsd = k_t.transpose(1, 2).contiguous()
     v_bhsd = v_t.transpose(1, 2).contiguous()
     g_bhsd = None if g_t is None else g_t.transpose(1, 2)
 
-    vbs = meta.variable_block_sizes
     num_blocks = int(vbs.numel())
-
-    # 3. Coarse compression branch (exact FastVideo ops.py)
     q_c = _block_mean_pool(q_bhsd, vbs, block_elements)
     k_c = _block_mean_pool(k_bhsd, vbs, block_elements)
     v_c = _block_mean_pool(v_bhsd, vbs, block_elements)
 
     scores = torch.matmul(q_c, k_c.transpose(-2, -1)) * (D ** -0.5)
     attn_c = torch.softmax(scores.float(), dim=-1).to(q_bhsd.dtype)
-    out_c = torch.matmul(attn_c, v_c)  # [B, H, num_blocks, D]
+    out_c = torch.matmul(attn_c, v_c)
 
-    # 4. Top-k tile routing (deterministic sorted topk on scores)
     topk_idx = torch.topk(scores.detach().float(), k=meta.topk, dim=-1, largest=True, sorted=True).indices
-
-    # 5. Fine block-sparse attention
     out_s = _block_sparse_attention_pytorch(
         q_bhsd, k_bhsd, v_bhsd, topk_idx, vbs, block_elements, q_chunk_blocks=q_chunk_blocks
     )
 
-    # 6. Coarse + sparse combine (exact FastVideo _combine_coarse_sparse)
     out_s_b = out_s.view(B, H, num_blocks, block_elements, D)
     out_c_exp = out_c.unsqueeze(3)
     if g_bhsd is not None:
@@ -311,6 +375,4 @@ def video_sparse_attention(
         combined = out_s_b + out_c_exp
 
     out_bshd = combined.view(B, H, meta.padded_seq_length, D).transpose(1, 2)
-
-    # 7. Untile back to raster order [B, S, H, D]
     return untile_output(out_bshd, meta)
